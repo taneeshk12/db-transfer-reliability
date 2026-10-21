@@ -48,8 +48,22 @@ FOCUS_HUBS: tuple[str, ...] = (
     "Hamburg Hbf",
 )
 
+# How each focus hub is named in the piebro dataset's `station_name` column.
+# Verified in Phase 2: the dataset uses "Berlin Hauptbahnhof", not "Berlin Hbf", and
+# groups several EVA numbers (main hall, S-Bahn/"tief" platforms, wing stations)
+# under one `station_name`. Matching on this name therefore captures the whole hub.
+HISTORY_STATION_NAMES: dict[str, str] = {
+    "Frankfurt (Main) Hbf": "Frankfurt (Main) Hbf",
+    "Hannover Hbf": "Hannover Hbf",
+    "Köln Hbf": "Köln Hbf",
+    "Berlin Hbf": "Berlin Hauptbahnhof",
+    "München Hbf": "München Hbf",
+    "Hamburg Hbf": "Hamburg Hbf",
+}
+
 # --- Hugging Face source -------------------------------------------------------
 HF_DATASET_REPO = "piebro/deutsche-bahn-data"
+HUBS_HISTORY_PARQUET = PROCESSED_DIR / "history_hubs.parquet"
 
 
 # --- Database ------------------------------------------------------------------
@@ -94,3 +108,6 @@ def setup_logging(level: int = logging.INFO) -> None:
         format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
+    # HTTP client libraries log every request at INFO; keep our own logs readable.
+    for noisy in ("httpx", "httpx2", "httpcore", "urllib3", "huggingface_hub"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
