@@ -63,6 +63,8 @@ docker compose ps                  # wait until the status is "healthy"
 pytest
 ```
 
+API credentials for the live collector: see [docs/collector.md](docs/collector.md).
+
 ### Running the pipeline
 
 _TBD: `python run_pipeline.py` (Phase 4)._

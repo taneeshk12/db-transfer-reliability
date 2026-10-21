@@ -61,6 +61,27 @@ HISTORY_STATION_NAMES: dict[str, str] = {
     "Hamburg Hbf": "Hamburg Hbf",
 }
 
+# How each hub is named in the DB Timetables API (`/station` search pattern and the
+# exact `name` we expect back). Taken from `xml_station_name` in the historical data.
+API_STATION_NAMES: dict[str, str] = {
+    "Frankfurt (Main) Hbf": "Frankfurt(Main)Hbf",
+    "Hannover Hbf": "Hannover Hbf",
+    "Köln Hbf": "Köln Hbf",
+    "Berlin Hbf": "Berlin Hbf",
+    "München Hbf": "München Hbf",
+    "Hamburg Hbf": "Hamburg Hbf",
+}
+
+# --- DB Timetables API ------------------------------------------------------------
+TIMETABLES_BASE_URL = "https://apis.deutschebahn.com/db-api-marketplace/apis/timetables/v1"
+# The Free plan allows 60 calls/min (DB API Marketplace product page, checked 2026-10-21).
+# We pace at one call every 3 s = 20 calls/min, a third of the limit.
+API_MIN_INTERVAL_S = 3.0
+API_TIMEOUT_S = 30.0
+# Plans are fetched this many hours ahead (current hour included).
+PLAN_HOURS_AHEAD = 3
+STATIONS_CACHE = RAW_API_DIR / "stations.json"
+
 # --- Hugging Face source -------------------------------------------------------
 HF_DATASET_REPO = "piebro/deutsche-bahn-data"
 HUBS_HISTORY_PARQUET = PROCESSED_DIR / "history_hubs.parquet"
