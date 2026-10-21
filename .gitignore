@@ -1,0 +1,35 @@
+# Secrets — never commit real credentials
+.env
+
+# Data (large parquet files and API snapshots; everything here is reproducible)
+data/raw/**
+data/processed/**
+!data/raw/**/
+!data/processed/**/
+!data/**/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Power BI (the .pbix is large and binary; the spec + DAX are the versioned source)
+*.pbix
+*.pbit
+
+# Logs
+logs/
+*.log
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

@@ -1,0 +1,20 @@
+# Data processing
+duckdb>=1.1,<2.0          # out-of-core SQL over the large monthly parquet files
+pandas>=2.2,<3.0          # small/medium frames (API snapshots, dimensions, aggregates)
+pyarrow>=15.0             # parquet I/O for pandas
+
+# Data acquisition
+huggingface_hub>=0.24     # download selected monthly files from piebro/deutsche-bahn-data
+requests>=2.31,<3.0       # DB Timetables API (retries via urllib3 Retry)
+lxml>=5.0                 # XML parsing of API responses
+
+# Database
+SQLAlchemy>=2.0,<3.0
+psycopg2-binary>=2.9,<3.0
+
+# Config / calendar
+python-dotenv>=1.0,<2.0
+holidays>=0.50            # German public holidays (incl. state-level) for dim_date
+
+# Testing
+pytest>=8.0

@@ -1,0 +1,10 @@
+[project]
+name = "db-transfer-reliability"
+version = "0.1.0"
+description = "Train delay and transfer reliability at Germany's major rail hubs"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+# Lets tests import `src.*` without installing the package.
+pythonpath = ["."]
+testpaths = ["tests"]
