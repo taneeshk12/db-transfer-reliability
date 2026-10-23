@@ -33,7 +33,9 @@ _TBD (Mermaid diagram, Phase 8)._
 
 ## Data model
 
-_TBD (star schema, Phase 4)._
+Star schema in PostgreSQL (schema `dw`): `fact_stop` (one train stop at one hub, 1.67M rows for
+Apr–Sep 2026) with `dim_date`, `dim_station` and `dim_train`. Cleaning rules, dedup and train
+categories: [docs/data_model.md](docs/data_model.md).
 
 ## Getting started
 
@@ -67,7 +69,14 @@ API credentials for the live collector: see [docs/collector.md](docs/collector.m
 
 ### Running the pipeline
 
-_TBD: `python run_pipeline.py` (Phase 4)._
+```bash
+python -m src.download_history     # once: fetch the monthly parquet files
+python run_pipeline.py             # filter hubs -> transform -> load into PostgreSQL (~2 min)
+python run_pipeline.py --skip-filter   # reuse data/processed/history_hubs.parquet
+```
+
+The load is idempotent: every run truncates and reloads the `dw` tables in one transaction.
+The live collector is optional; the analysis runs on the historical data alone.
 
 ## Repository structure
 

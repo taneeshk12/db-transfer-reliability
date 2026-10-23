@@ -61,6 +61,29 @@ HISTORY_STATION_NAMES: dict[str, str] = {
     "Hamburg Hbf": "Hamburg Hbf",
 }
 
+# Federal state (ISO 3166-2:DE subdivision) per hub, for state-level public holidays.
+HUB_STATES: dict[str, str] = {
+    "Frankfurt (Main) Hbf": "HE",
+    "Hannover Hbf": "NI",
+    "Köln Hbf": "NW",
+    "Berlin Hbf": "BE",
+    "München Hbf": "BY",
+    "Hamburg Hbf": "HH",
+}
+
+# --- Train classification ----------------------------------------------------------
+# `train_type` mixes product codes with operator codes (Phase 2 profile). Rules, in order:
+#   1. bus / rail replacement: type or line prefix in BUS_CODES
+#   2. long distance: type in LONG_DISTANCE_TYPES (FLX20/FLX30 count as FLX)
+#   3. product = type if it is S/RE/RB, else the line prefix (operator codes like ME, NX, SBH)
+#   4. regional-express style lines (FEX, NIRE, HBX) and types like RE8/REOE count as RE
+#   5. anything else (charter, special trains, unknown) is "other"
+BUS_CODES: tuple[str, ...] = ("BUS", "SEV", "BSV", "EV", "SSV", "LEERS")
+LONG_DISTANCE_TYPES: tuple[str, ...] = (
+    "ICE", "IC", "EC", "ECE", "EN", "NJ", "RJ", "RJX", "TGV", "EUR", "ES", "FLX", "WB", "D", "UEX",
+)
+REGIONAL_EXPRESS_LINES: tuple[str, ...] = ("FEX", "NIRE", "HBX")
+
 # How each hub is named in the DB Timetables API (`/station` search pattern and the
 # exact `name` we expect back). Taken from `xml_station_name` in the historical data.
 API_STATION_NAMES: dict[str, str] = {
@@ -85,6 +108,8 @@ STATIONS_CACHE = RAW_API_DIR / "stations.json"
 # --- Hugging Face source -------------------------------------------------------
 HF_DATASET_REPO = "piebro/deutsche-bahn-data"
 HUBS_HISTORY_PARQUET = PROCESSED_DIR / "history_hubs.parquet"
+CURATED_DIR = PROCESSED_DIR / "curated"            # star-schema tables as parquet, input to load.py
+DW_SCHEMA = "dw"
 
 
 # --- Database ------------------------------------------------------------------
