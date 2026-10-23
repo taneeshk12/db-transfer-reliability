@@ -104,7 +104,16 @@ db-transfer-reliability/
 
 ## Key findings
 
-_TBD: based on real query results (Phase 6/8)._
+Apr–Sep 2026, 1.67M stops. Details and queries: [docs/findings.md](docs/findings.md).
+
+- **A 5-minute transfer fails 17.8 % of the time; 15 minutes cuts that to 6.8 %.** Worst hub Hannover
+  (32.2 % at 5 min), best Hamburg (11.2 %). Walking time is not modelled, so real risk is higher.
+- **Coming off a long-distance train is the risk:** only 37–50 % of long-distance arrivals are on time,
+  and 47 % of 5-minute changes from a long-distance train to an S-Bahn are missed.
+- **Hamburg and Berlin are the most punctual hubs** (84.7 % / 83.1 % of arrivals on time), Hannover the
+  least (64.5 %), driven largely by their S-Bahn share.
+- **Evening peak is worst:** weekday punctuality drops to 65 % at 16:00–18:00; weekends are better at every hour.
+- **Cancellations peak in late June** (11 % of stops in week 26 against a 5.1 % average).
 
 ## Limitations
 

@@ -43,6 +43,7 @@ erDiagram
 | Rule | Detail | Rows affected (Apr–Sep 2026) |
 |---|---|---|
 | Drop rows without planned time | No train number, type or delay; cannot be analysed | 24,646 |
+| Outside covered months | Planned on 31 Mar but stored in the April file (ran after midnight) | 22 |
 | Deduplicate | Key hub + `train_line_ride_id` + planned time (departure, else arrival). Keep: plan record → both arrival and departure → lowest EVA | 858 |
 | Delays | `actual − planned` in minutes, per side; NULL if that side is cancelled or absent | — |
 | On time | delay < 6 min (`ON_TIME_THRESHOLD_MIN`); early counts as on time | — |
@@ -59,9 +60,9 @@ the dedup key.
 
 | Category | Products | Stops |
 |---|---|---|
-| `s_bahn` | S (incl. operator SBH) | 830,955 |
-| `regional` | RE, RB (product from line prefix for operators such as ME, NX, BRB; FEX/NIRE/HBX → RE) | 551,437 |
-| `long_distance` | ICE, IC, EC, ECE, RJ, RJX, NJ, EN, TGV, EUR, ES, FLX, WB, D, UEX | 276,764 |
+| `s_bahn` | S (incl. operator SBH) | 830,951 |
+| `regional` | RE, RB (product from line prefix for operators such as ME, NX, BRB; FEX/NIRE/HBX → RE) | 551,430 |
+| `long_distance` | ICE, IC, EC, ECE, RJ, RJX, NJ, EN, TGV, EUR, ES, FLX, WB, D, UEX | 276,753 |
 | `bus` | Bus / rail replacement (Bus, SEV, EV, …) | 7,267 |
 | `other` | Charter and special trains (GV, DZ, MSM, …) | 588 |
 

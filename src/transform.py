@@ -8,7 +8,8 @@ Steps, all in DuckDB:
    arrival and departure, then the lowest EVA (deterministic)
 3. delays from timestamps (actual − planned, minutes), NULL for a cancelled side
 4. on-time flags (delay < ON_TIME_THRESHOLD_MIN), NULL when not measurable or implausible
-5. classify trains (rules in config.py) and build dim_date / dim_station / dim_train
+5. keep only stops planned within the covered months
+6. classify trains (rules in config.py) and build dim_date / dim_station / dim_train
 
 Usage:
     python -m src.transform
@@ -155,7 +156,20 @@ def transform(source: Path = HUBS_HISTORY_PARQUET, target_dir: Path = CURATED_DI
     if n_untyped:
         raise ValueError(f"{n_untyped} stops with a planned time but no train_type; check the source")
 
-    start, end = con.execute("SELECT min(planned_ref)::date, max(planned_ref)::date FROM stops").fetchone()
+    # Keep only stops planned within the covered months: a source file also holds a few trains
+    # planned late on the previous month's last day (they ran after midnight), which would
+    # otherwise show up as an almost empty extra day/month.
+    start, end = con.execute(
+        """
+        SELECT strptime(min(file_month), '%Y-%m')::DATE,
+               last_day(strptime(max(file_month), '%Y-%m'))::DATE
+        FROM stops
+        """
+    ).fetchone()
+    n_out_of_range = con.execute(
+        "SELECT count(*) FROM stops WHERE planned_ref::DATE NOT BETWEEN ? AND ?", [start, end]
+    ).fetchone()[0]
+    con.execute("DELETE FROM stops WHERE planned_ref::DATE NOT BETWEEN ? AND ?", [start, end])
     dim_date = build_dim_date(start, end)
     con.register("hub_hol", hub_holidays(start, end))
 
@@ -173,7 +187,11 @@ def transform(source: Path = HUBS_HISTORY_PARQUET, target_dir: Path = CURATED_DI
         f"""
         SELECT row_number() OVER (ORDER BY train_type, line_number NULLS FIRST)::INTEGER AS train_key,
                {category} AS train_category, {product} AS product, train_type, line_number,
-               coalesce(line_number, {product}, train_type) AS line_label
+               -- digit-only line numbers ("30" for FlixTrain, "7" for S-Bahn) get the product prefix
+               CASE WHEN regexp_matches(line_number, '^[0-9]+$') AND {product} IS NOT NULL
+                    THEN {product} || CASE WHEN {product} = 'S' THEN '' ELSE ' ' END || line_number
+                    ELSE coalesce(nullif(line_number, ''), {product}, train_type)
+               END AS line_label
         FROM (SELECT DISTINCT train_type, line_number FROM stops)
         ORDER BY train_key
         """
@@ -215,13 +233,17 @@ def transform(source: Path = HUBS_HISTORY_PARQUET, target_dir: Path = CURATED_DI
         "SELECT count(*) FROM src WHERE coalesce(departure_planned_time, arrival_planned_time) IS NOT NULL"
     ).fetchone()[0]
     counts["dropped_no_planned_time"] = n_source - n_planned
-    counts["dropped_duplicates"] = n_planned - counts["fact_stop"]
+    counts["dropped_out_of_range"] = n_out_of_range
+    counts["dropped_duplicates"] = n_planned - n_out_of_range - counts["fact_stop"]
     logger.info(
-        "Source %s rows -> %s stops (%s without planned time, %s duplicates removed)",
+        "Source %s rows -> %s stops (%s without planned time, %s duplicates removed, %s outside %s..%s)",
         f"{n_source:,}",
         f"{counts['fact_stop']:,}",
         f"{counts['dropped_no_planned_time']:,}",
         f"{counts['dropped_duplicates']:,}",
+        f"{n_out_of_range:,}",
+        start,
+        end,
     )
     logger.info("Curated tables in %s: %s", target_dir, counts)
     return counts
