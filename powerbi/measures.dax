@@ -1,0 +1,39 @@
+// DAX measures for the report. Create them in a measure table "_Measures" (Enter data -> empty table).
+// Definitions match sql/analysis/*.sql: on time = delay < 6 min; NULL on-time flags (cancelled side,
+// implausible delay) are excluded from the denominator.
+
+// --- Stops / punctuality (fact_stop) -----------------------------------------------------------
+Stops = COUNTROWS ( fact_stop )
+
+Arrival On-Time % =
+DIVIDE (
+    CALCULATE ( COUNTROWS ( fact_stop ), fact_stop[is_arrival_on_time] = TRUE () ),
+    CALCULATE ( COUNTROWS ( fact_stop ), NOT ISBLANK ( fact_stop[is_arrival_on_time] ) )
+)
+
+Departure On-Time % =
+DIVIDE (
+    CALCULATE ( COUNTROWS ( fact_stop ), fact_stop[is_departure_on_time] = TRUE () ),
+    CALCULATE ( COUNTROWS ( fact_stop ), NOT ISBLANK ( fact_stop[is_departure_on_time] ) )
+)
+
+Measured Arrivals =
+CALCULATE ( COUNTROWS ( fact_stop ), NOT ISBLANK ( fact_stop[is_arrival_on_time] ) )
+
+Avg Arrival Delay (min) =
+CALCULATE ( AVERAGE ( fact_stop[arrival_delay_min] ), fact_stop[is_delay_implausible] = FALSE () )
+
+Cancellation % =
+DIVIDE ( CALCULATE ( COUNTROWS ( fact_stop ), fact_stop[is_cancelled] = TRUE () ), [Stops] )
+
+// --- Transfer risk (agg_transfer_risk) ------------------------------------------------------------
+Transfer Pairs = SUM ( agg_transfer_risk[n_pairs] )
+
+Missed Transfer % =
+DIVIDE ( SUM ( agg_transfer_risk[n_missed] ), [Transfer Pairs] )
+
+Missed If Connection On Time % =
+DIVIDE ( SUM ( agg_transfer_risk[n_missed_if_departure_on_time] ), [Transfer Pairs] )
+
+// Delay of connecting trains "rescues" this share of transfers the naive rule would count as missed.
+Rescued By Late Connection pp = [Missed If Connection On Time %] - [Missed Transfer %]
