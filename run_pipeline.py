@@ -1,4 +1,4 @@
-"""Run the batch pipeline: filter hubs -> transform -> load into PostgreSQL.
+"""Run the batch pipeline: filter hubs -> transform -> transfer risk -> load into PostgreSQL.
 
 Assumes the monthly history is downloaded (`python -m src.download_history`).
 
@@ -16,6 +16,7 @@ import time
 from src.config import setup_logging
 from src.filter_hubs import filter_hubs
 from src.load import load
+from src.transfer_risk import transfer_risk
 from src.transform import transform
 
 logger = logging.getLogger("pipeline")
@@ -31,6 +32,7 @@ def main() -> None:
     if not args.skip_filter:
         filter_hubs()
     transform()
+    transfer_risk()
     load()
     logger.info("Pipeline finished in %.0f s", time.monotonic() - started)
 

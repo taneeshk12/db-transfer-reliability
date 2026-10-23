@@ -68,3 +68,18 @@ CREATE TABLE IF NOT EXISTS dw.fact_stop (
 CREATE INDEX IF NOT EXISTS ix_fact_stop_date ON dw.fact_stop (date_key);
 CREATE INDEX IF NOT EXISTS ix_fact_stop_station ON dw.fact_stop (station_key);
 CREATE INDEX IF NOT EXISTS ix_fact_stop_train ON dw.fact_stop (train_key);
+
+-- Transfer risk aggregate (src/transfer_risk.py). One row per hub × buffer × arrival hour × weekend
+-- × arriving / connecting train category. Rates: n_missed / n_pairs.
+CREATE TABLE IF NOT EXISTS dw.agg_transfer_risk (
+    hub                           text NOT NULL,
+    buffer_min                    smallint NOT NULL,
+    arrival_hour                  smallint NOT NULL,
+    is_weekend                    boolean NOT NULL,
+    arrival_category              text NOT NULL,
+    departure_category            text NOT NULL,
+    n_pairs                       bigint NOT NULL,
+    n_missed                      bigint NOT NULL,     -- arrived at/after the connection's actual departure
+    n_missed_if_departure_on_time bigint NOT NULL,     -- arrival delay >= buffer (upper bound)
+    PRIMARY KEY (hub, buffer_min, arrival_hour, is_weekend, arrival_category, departure_category)
+);

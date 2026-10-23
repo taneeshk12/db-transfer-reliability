@@ -17,11 +17,14 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 
 from src.config import CURATED_DIR, DW_SCHEMA, SQL_DIR, database_url, setup_logging
+from src.transfer_risk import AGG_TABLE
 from src.transform import TABLES
 
 logger = logging.getLogger(__name__)
 
 NULL_MARKER = r"\N"
+# Dimensions first, then the fact (foreign keys), then the aggregate.
+LOAD_TABLES = (*TABLES, AGG_TABLE)
 
 
 def frame_to_csv(frame: pd.DataFrame) -> io.StringIO:
@@ -34,18 +37,20 @@ def frame_to_csv(frame: pd.DataFrame) -> io.StringIO:
 
 def load(source_dir: Path = CURATED_DIR, url: str | None = None) -> dict[str, int]:
     """Reload all star-schema tables and return the row count of each table in the database."""
-    missing = [t for t in TABLES if not (source_dir / f"{t}.parquet").exists()]
+    missing = [t for t in LOAD_TABLES if not (source_dir / f"{t}.parquet").exists()]
     if missing:
-        raise FileNotFoundError(f"Missing curated tables {missing} in {source_dir}; run src.transform first")
+        raise FileNotFoundError(
+            f"Missing curated tables {missing} in {source_dir}; run src.transform and src.transfer_risk first"
+        )
 
     engine = create_engine(url or database_url())
     schema_sql = (SQL_DIR / "schema.sql").read_text(encoding="utf-8")
     counts: dict[str, int] = {}
     with engine.begin() as conn:
         conn.execute(text(schema_sql))
-        conn.execute(text(f"TRUNCATE {', '.join(f'{DW_SCHEMA}.{t}' for t in TABLES)}"))
+        conn.execute(text(f"TRUNCATE {', '.join(f'{DW_SCHEMA}.{t}' for t in LOAD_TABLES)}"))
         cursor = conn.connection.cursor()
-        for table in TABLES:  # dimensions first, then the fact (foreign keys)
+        for table in LOAD_TABLES:
             # numpy_nullable keeps integer columns with NULLs as integers (not 5.0 floats).
             frame = pd.read_parquet(source_dir / f"{table}.parquet", dtype_backend="numpy_nullable")
             columns = ", ".join(frame.columns)
@@ -58,7 +63,7 @@ def load(source_dir: Path = CURATED_DIR, url: str | None = None) -> dict[str, in
                 raise RuntimeError(f"{table}: loaded {counts[table]} rows, expected {len(frame)}")
             logger.info("Loaded %s rows into %s.%s", f"{counts[table]:,}", DW_SCHEMA, table)
     with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
-        conn.execute(text(f"ANALYZE {', '.join(f'{DW_SCHEMA}.{t}' for t in TABLES)}"))
+        conn.execute(text(f"ANALYZE {', '.join(f'{DW_SCHEMA}.{t}' for t in LOAD_TABLES)}"))
     return counts
 
 

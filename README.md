@@ -36,6 +36,7 @@ _TBD (Mermaid diagram, Phase 8)._
 Star schema in PostgreSQL (schema `dw`): `fact_stop` (one train stop at one hub, 1.67M rows for
 Apr–Sep 2026) with `dim_date`, `dim_station` and `dim_train`. Cleaning rules, dedup and train
 categories: [docs/data_model.md](docs/data_model.md).
+Transfer risk is pre-aggregated in `agg_transfer_risk`; method and limitations: [docs/transfer_risk.md](docs/transfer_risk.md).
 
 ## Getting started
 
@@ -71,7 +72,7 @@ API credentials for the live collector: see [docs/collector.md](docs/collector.m
 
 ```bash
 python -m src.download_history     # once: fetch the monthly parquet files
-python run_pipeline.py             # filter hubs -> transform -> load into PostgreSQL (~2 min)
+python run_pipeline.py             # filter hubs -> transform -> transfer risk -> load (~2 min)
 python run_pipeline.py --skip-filter   # reuse data/processed/history_hubs.parquet
 ```
 
